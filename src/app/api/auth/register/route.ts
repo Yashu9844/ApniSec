@@ -1,10 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { AuthHandler } from '@/backend/handlers/AuthHandler';
+import { AuthService } from '@/backend/services/AuthService';
+import { UserRepository } from '@/backend/repositories/UserRepository';
+import { JwtUtil } from '@/backend/utils/JwtUtil';
+import { EmailUtil } from '@/backend/utils/EmailUtil';
+import { AuthValidator } from '@/backend/validators/AuthValidator';
+import { RateLimiter } from '@/backend/utils/RateLimiter';
 
 export async function POST(req: NextRequest) {
-  try {
-    // TODO: Initialize dependencies and call AuthHandler in Phase-2
-    return NextResponse.json({ message: 'Register endpoint - Phase-2' }, { status: 501 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  const userRepository = new UserRepository();
+  const authService = new AuthService(userRepository, new JwtUtil(), new EmailUtil());
+  const authValidator = new AuthValidator();
+  const rateLimiter = new RateLimiter();
+  const authHandler = new AuthHandler(authService, authValidator, rateLimiter);
+
+  return authHandler.handleRegister(req);
 }

@@ -9,18 +9,37 @@ export class RateLimiter {
     this.windowMs = windowMs;
   }
 
+  async checkLimit(identifier: string): Promise<void> {
+    const now = Date.now();
+    const requests = this.requests.get(identifier) || [];
+
+    // Filter out old requests outside the time window
+    const recentRequests = requests.filter(time => now - time < this.windowMs);
+
+    if (recentRequests.length >= this.maxRequests) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    // Add current request
+    recentRequests.push(now);
+    this.requests.set(identifier, recentRequests);
+  }
+
   isRateLimited(identifier: string): boolean {
-    // TODO: Implement in Phase-2
-    throw new Error('Not implemented');
+    const now = Date.now();
+    const requests = this.requests.get(identifier) || [];
+    const recentRequests = requests.filter(time => now - time < this.windowMs);
+    return recentRequests.length >= this.maxRequests;
   }
 
   reset(identifier: string): void {
-    // TODO: Implement in Phase-2
-    throw new Error('Not implemented');
+    this.requests.delete(identifier);
   }
 
   getRemainingRequests(identifier: string): number {
-    // TODO: Implement in Phase-2
-    throw new Error('Not implemented');
+    const now = Date.now();
+    const requests = this.requests.get(identifier) || [];
+    const recentRequests = requests.filter(time => now - time < this.windowMs);
+    return Math.max(0, this.maxRequests - recentRequests.length);
   }
 }

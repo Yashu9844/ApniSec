@@ -8,10 +8,19 @@ import { AuthValidator } from '@/backend/validators/AuthValidator';
 import { RateLimiter } from '@/backend/utils/RateLimiter';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
+
+let prisma: PrismaClient;
+
+function getPrismaClient() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export async function GET(req: NextRequest) {
-  const userRepository = new UserRepository(prisma);
+  const userRepository = new UserRepository(getPrismaClient());
   const authService = new AuthService(userRepository, new JwtUtil(), EmailUtil);
   const authValidator = new AuthValidator();
   const rateLimiter = new RateLimiter();

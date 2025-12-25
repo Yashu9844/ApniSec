@@ -5,9 +5,19 @@ import { IssueService } from '@/backend/services/IssueService';
 import { IssueRepository } from '@/backend/repositories/IssueRepository';
 import { IssueValidator } from '@/backend/validators/IssueValidator';
 
+export const dynamic = 'force-dynamic';
+
+let prisma: PrismaClient;
+
+function getPrismaClient() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
+
 function getIssueHandler() {
-  const prisma = new PrismaClient();
-  const issueRepository = new IssueRepository(prisma);
+  const issueRepository = new IssueRepository(getPrismaClient());
   const issueService = new IssueService(issueRepository);
   const issueValidator = new IssueValidator();
   return new IssueHandler(issueService, issueValidator);

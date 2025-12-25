@@ -7,13 +7,13 @@ export function createMockRequest(
   headers: Record<string, string> = {}
 ): NextRequest {
   const url = 'http://localhost:3000/api/test'
-  const init: RequestInit = {
+  const init = {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
-  }
+  } as RequestInit
 
   if (body) {
     init.body = JSON.stringify(body)

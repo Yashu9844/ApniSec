@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../errors/AppError';
 
 export class JwtUtil {
-  static sign(payload: object): string {
+  static sign(payload: object, expiresIn: string = '7d'): string {
     const secret = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
-    return jwt.sign(payload, secret, { expiresIn: '7d' });
+    return jwt.sign(payload, secret, { expiresIn });
   }
 
   static verify(token: string): any {

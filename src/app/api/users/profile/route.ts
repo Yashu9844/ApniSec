@@ -4,10 +4,19 @@ import { UserService } from '@/backend/services/UserService';
 import { UserRepository } from '@/backend/repositories/UserRepository';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
+
+let prisma: PrismaClient;
+
+function getPrismaClient() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 function getUserHandler() {
-  const userRepository = new UserRepository(prisma);
+  const userRepository = new UserRepository(getPrismaClient());
   const userService = new UserService(userRepository);
   return new UserHandler(userService);
 }

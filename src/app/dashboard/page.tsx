@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Button from "@/components/ui/Button";
 
@@ -165,75 +166,95 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cyber-dark cyber-grid flex items-center justify-center">
+      <div className="min-h-screen bg-[#030303] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyber-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-cyber-green text-lg">Loading dashboard...</p>
+          <div className="loader-cyber mx-auto mb-6" />
+          <p className="text-gray-400">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cyber-dark cyber-grid">
+    <div className="min-h-screen bg-[#030303] cyber-grid">
       <Navbar />
       
-      <main className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#00ff88]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#00d4ff]/5 rounded-full blur-[150px]" />
+      </div>
+
+      <main className="relative z-10 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Welcome Header */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl font-bold mb-2">
-              <span className="text-white">Welcome back, </span>
-              <span className="neon-green">{user?.name}</span>
-            </h1>
-            <p className="text-gray-400 text-lg">Manage your security issues efficiently</p>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 animate-fade-in">
+            <div>
+              <p className="text-gray-500 text-sm mb-1">Welcome back</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">
+                Hello, <span className="text-gradient">{user?.name}</span> 👋
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/profile">
+                <Button variant="ghost" size="sm">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Profile
+                </Button>
+              </Link>
+              <Button variant="secondary" size="sm" onClick={handleLogout}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="glass p-6 rounded-xl border border-cyber-green/20 hover:border-cyber-green/40 transition-all transform hover:scale-105 animate-fade-in glow-green">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-400">Total Issues</h3>
-                  <span className="text-2xl">📊</span>
-                </div>
-                <p className="text-3xl font-bold text-cyber-green">{stats.total}</p>
-              </div>
-              
-              <div className="glass p-6 rounded-xl border border-cyber-cyan/20 hover:border-cyber-cyan/40 transition-all transform hover:scale-105 animate-fade-in glow-cyan" style={{ animationDelay: '0.1s' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-400">Open</h3>
-                  <span className="text-2xl">🔓</span>
-                </div>
-                <p className="text-3xl font-bold text-cyber-cyan">{stats.open}</p>
-              </div>
-              
-              <div className="glass p-6 rounded-xl border border-yellow-500/20 hover:border-yellow-500/40 transition-all transform hover:scale-105 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-400">In Progress</h3>
-                  <span className="text-2xl">⚡</span>
-                </div>
-                <p className="text-3xl font-bold text-yellow-400">{stats.inProgress}</p>
-              </div>
-              
-              <div className="glass p-6 rounded-xl border border-green-500/20 hover:border-green-500/40 transition-all transform hover:scale-105 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-400">Resolved</h3>
-                  <span className="text-2xl">✅</span>
-                </div>
-                <p className="text-3xl font-bold text-green-400">{stats.resolved}</p>
-              </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatCard
+                label="Total Issues"
+                value={stats.total}
+                icon={<TotalIcon />}
+                color="purple"
+                delay={0}
+              />
+              <StatCard
+                label="Open"
+                value={stats.open}
+                icon={<OpenIcon />}
+                color="cyan"
+                delay={0.1}
+              />
+              <StatCard
+                label="In Progress"
+                value={stats.inProgress}
+                icon={<ProgressIcon />}
+                color="yellow"
+                delay={0.2}
+              />
+              <StatCard
+                label="Resolved"
+                value={stats.resolved}
+                icon={<ResolvedIcon />}
+                color="green"
+                delay={0.3}
+              />
             </div>
           )}
 
-          {/* Filters and Create Button */}
-          <div className="glass-strong p-6 rounded-xl mb-6 border border-cyber-green/20 animate-fade-in">
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="flex flex-wrap gap-4 flex-1">
+          {/* Filters Bar */}
+          <div className="glass-card rounded-2xl p-6 mb-6 border border-white/5 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
+                  className="select-cyber"
                 >
                   <option value="">All Types</option>
                   <option value="Cloud Security">Cloud Security</option>
@@ -244,7 +265,7 @@ export default function DashboardPage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
+                  className="select-cyber"
                 >
                   <option value="">All Status</option>
                   <option value="open">Open</option>
@@ -253,21 +274,31 @@ export default function DashboardPage() {
                   <option value="closed">Closed</option>
                 </select>
 
-                <input
-                  type="text"
-                  placeholder="Search issues..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="px-4 py-2 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search issues..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input-cyber pl-12"
+                  />
+                </div>
               </div>
 
               <Button
                 onClick={() => setShowCreateModal(true)}
                 variant="primary"
-                className="w-full lg:w-auto"
+                className="whitespace-nowrap"
               >
-                + Create Issue
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                New Issue
               </Button>
             </div>
           </div>
@@ -275,60 +306,26 @@ export default function DashboardPage() {
           {/* Issues List */}
           <div className="space-y-4">
             {issues.length === 0 ? (
-              <div className="glass-strong text-center py-16 rounded-xl border border-cyber-green/20 animate-fade-in">
-                <div className="text-6xl mb-4">🔒</div>
-                <p className="text-gray-400 text-lg mb-4">No issues found</p>
-                <Button
-                  onClick={() => setShowCreateModal(true)}
-                  variant="primary"
-                >
-                  Create Your First Issue
+              <div className="glass-card rounded-2xl p-16 text-center border border-white/5 animate-fade-in">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#00ff88]/20 to-[#00d4ff]/20 flex items-center justify-center">
+                  <svg className="w-10 h-10 text-[#00ff88]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">No issues found</h3>
+                <p className="text-gray-500 mb-6">Create your first security issue to get started</p>
+                <Button onClick={() => setShowCreateModal(true)} variant="primary">
+                  Create Issue
                 </Button>
               </div>
             ) : (
               issues.map((issue, index) => (
-                <div
+                <IssueCard
                   key={issue.id}
-                  className="glass p-6 rounded-xl border border-cyber-gray-light hover:border-cyber-green/50 transition-all transform hover:scale-[1.02] animate-fade-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-3 mb-3">
-                        <span className="px-3 py-1 bg-cyber-green/10 text-cyber-green text-xs font-medium rounded-full border border-cyber-green/30">
-                          {issue.type}
-                        </span>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${
-                          issue.status === 'open' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
-                          issue.status === 'in-progress' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
-                          issue.status === 'resolved' ? 'bg-cyber-cyan/10 text-cyber-cyan border-cyber-cyan/30' :
-                          'bg-gray-500/10 text-gray-400 border-gray-500/30'
-                        }`}>
-                          {issue.status}
-                        </span>
-                        <span className={`px-3 py-1 text-xs font-medium rounded-full border ${
-                          issue.priority === 'critical' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-                          issue.priority === 'high' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30' :
-                          issue.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
-                          'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                        }`}>
-                          {issue.priority}
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-semibold text-white mb-2">{issue.title}</h3>
-                      <p className="text-gray-400 line-clamp-2 mb-3">{issue.description}</p>
-                      <p className="text-xs text-gray-500">
-                        Created {new Date(issue.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteIssue(issue.id)}
-                      className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors border border-red-500/30 hover:border-red-500/50"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                  issue={issue}
+                  index={index}
+                  onDelete={() => handleDeleteIssue(issue.id)}
+                />
               ))
             )}
           </div>
@@ -337,35 +334,53 @@ export default function DashboardPage() {
 
       {/* Create Issue Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="glass-strong p-8 rounded-2xl max-w-2xl w-full border border-cyber-green/30 glow-green animate-slide-in">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">
-                <span className="neon-green">Create New Issue</span>
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowCreateModal(false)} />
+          <div className="relative w-full max-w-2xl glass-strong rounded-3xl p-8 border border-white/10 animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Create New Issue</h2>
+                <p className="text-gray-500 text-sm mt-1">Report a security vulnerability or issue</p>
+              </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateIssue} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Issue Type</label>
-                <select
-                  value={newIssue.type}
-                  onChange={(e) => setNewIssue({ ...newIssue, type: e.target.value })}
-                  className="w-full px-4 py-3 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
-                  required
-                >
-                  <option>Cloud Security</option>
-                  <option>Reteam Assessment</option>
-                  <option>VAPT</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Issue Type</label>
+                  <select
+                    value={newIssue.type}
+                    onChange={(e) => setNewIssue({ ...newIssue, type: e.target.value })}
+                    className="select-cyber"
+                    required
+                  >
+                    <option>Cloud Security</option>
+                    <option>Reteam Assessment</option>
+                    <option>VAPT</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                  <select
+                    value={newIssue.priority}
+                    onChange={(e) => setNewIssue({ ...newIssue, priority: e.target.value })}
+                    className="select-cyber"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -374,8 +389,8 @@ export default function DashboardPage() {
                   type="text"
                   value={newIssue.title}
                   onChange={(e) => setNewIssue({ ...newIssue, title: e.target.value })}
-                  className="w-full px-4 py-3 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
-                  placeholder="Enter issue title"
+                  className="input-cyber"
+                  placeholder="Brief description of the issue"
                   required
                   minLength={3}
                 />
@@ -386,40 +401,18 @@ export default function DashboardPage() {
                 <textarea
                   value={newIssue.description}
                   onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all h-32 resize-none"
-                  placeholder="Describe the security issue in detail"
+                  className="input-cyber min-h-[120px] resize-none"
+                  placeholder="Detailed description of the security issue..."
                   required
                   minLength={10}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
-                <select
-                  value={newIssue.priority}
-                  onChange={(e) => setNewIssue({ ...newIssue, priority: e.target.value })}
-                  className="w-full px-4 py-3 bg-cyber-gray border border-cyber-gray-light rounded-lg text-white focus:outline-none focus:border-cyber-green focus:ring-2 focus:ring-cyber-green/20 transition-all"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="flex-1"
-                >
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" variant="primary" className="flex-1">
                   Create Issue
                 </Button>
-                <Button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  variant="outline"
-                >
+                <Button type="button" variant="ghost" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
               </div>
@@ -428,5 +421,145 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+  delay
+}: {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  color: "green" | "cyan" | "yellow" | "purple";
+  delay: number;
+}) {
+  const colors = {
+    green: "from-[#00ff88]/20 to-[#00ff88]/5 border-[#00ff88]/20",
+    cyan: "from-[#00d4ff]/20 to-[#00d4ff]/5 border-[#00d4ff]/20",
+    yellow: "from-[#eab308]/20 to-[#eab308]/5 border-[#eab308]/20",
+    purple: "from-[#a855f7]/20 to-[#a855f7]/5 border-[#a855f7]/20",
+  };
+
+  const textColors = {
+    green: "text-[#00ff88]",
+    cyan: "text-[#00d4ff]",
+    yellow: "text-[#eab308]",
+    purple: "text-[#a855f7]",
+  };
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-gradient-to-b ${colors[color]} border p-6 animate-fade-in`}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-gray-500 text-sm mb-1">{label}</p>
+          <p className={`text-3xl font-bold ${textColors[color]}`}>{value}</p>
+        </div>
+        <div className={`${textColors[color]} opacity-50`}>{icon}</div>
+      </div>
+    </div>
+  );
+}
+
+function IssueCard({ issue, index, onDelete }: { issue: Issue; index: number; onDelete: () => void }) {
+  const statusColors: Record<string, string> = {
+    open: "badge-green",
+    "in-progress": "badge-yellow",
+    resolved: "badge-cyan",
+    closed: "badge-purple",
+  };
+
+  const priorityColors: Record<string, string> = {
+    low: "badge-cyan",
+    medium: "badge-yellow",
+    high: "badge-orange",
+    critical: "badge-red",
+  };
+
+  return (
+    <div
+      className="group glass-card rounded-2xl p-6 border border-white/5 hover:border-[#00ff88]/20 transition-all duration-300 animate-fade-in"
+      style={{ animationDelay: `${index * 0.05}s` }}
+    >
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          {/* Badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="badge badge-purple">{issue.type}</span>
+            <span className={`badge ${statusColors[issue.status] || "badge-gray"}`}>
+              {issue.status}
+            </span>
+            <span className={`badge ${priorityColors[issue.priority] || "badge-gray"}`}>
+              {issue.priority}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-[#00ff88] transition-colors">
+            {issue.title}
+          </h3>
+
+          {/* Description */}
+          <p className="text-gray-500 text-sm line-clamp-2 mb-3">{issue.description}</p>
+
+          {/* Date */}
+          <p className="text-xs text-gray-600">
+            Created {new Date(issue.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric"
+            })}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onDelete}
+            className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40 transition-all text-sm font-medium"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TotalIcon() {
+  return (
+    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  );
+}
+
+function OpenIcon() {
+  return (
+    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+function ProgressIcon() {
+  return (
+    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function ResolvedIcon() {
+  return (
+    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
   );
 }

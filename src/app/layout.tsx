@@ -13,10 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ApniSec - Professional Security Issue Management Platform",
+  title: "ApniSec | Next-Gen Cybersecurity Platform",
   description:
-    "Track, manage, and resolve security vulnerabilities with enterprise-grade tools. Cloud Security, VAPT, and Reteam Assessment management.",
-  keywords: "security, vulnerability management, VAPT, cloud security, cybersecurity",
+    "Enterprise-grade security vulnerability management. Detect, analyze, and remediate threats with AI-powered insights.",
+  keywords: "cybersecurity, vulnerability management, VAPT, cloud security, penetration testing, security platform",
 };
 
 export default function RootLayout({
@@ -25,9 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#030303] text-white`}
       >
         {children}
       </body>

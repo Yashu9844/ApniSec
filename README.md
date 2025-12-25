@@ -254,14 +254,7 @@ The backend follows a clean OOP architecture:
 - **Utils:** Reusable utilities (JWT, Email, RateLimiter)
 - **Errors:** Custom error classes
 
-##  License
 
-MIT License
-
-##  Author
-
-ApniSec Team
 
 ---
 
-Built with  for security professionals

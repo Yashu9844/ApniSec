@@ -146,6 +146,91 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## 🐳 Docker Setup
+
+The application is fully containerized with Docker support for both development and production environments.
+
+### Docker Files
+
+| File | Purpose |
+|------|---------|
+| `Dockerfile` | Multi-stage production build (optimized, minimal image) |
+| `Dockerfile.dev` | Development build with hot reload |
+| `docker-compose.yml` | Orchestrates app + PostgreSQL database |
+| `.dockerignore` | Excludes unnecessary files from build |
+
+### Quick Start with Docker
+
+#### Production Mode
+
+```bash
+# Build and start all services (app + database)
+docker-compose up -d
+
+# Run database migrations
+docker-compose exec app npx prisma migrate deploy
+
+# View logs
+docker-compose logs -f app
+```
+
+#### Development Mode (with Hot Reload)
+
+```bash
+# Start development environment
+docker-compose --profile dev up app-dev db
+
+# In another terminal, run migrations
+docker-compose exec app-dev npx prisma migrate dev
+```
+
+### Docker Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| `app` | 3000 | Production Next.js app |
+| `app-dev` | 3000 | Development app with hot reload |
+| `db` | 5432 | PostgreSQL 15 database |
+
+### Docker Commands Reference
+
+```bash
+# Build images
+docker-compose build
+
+# Start services in background
+docker-compose up -d
+
+# Stop all services
+docker-compose down
+
+# Stop and remove volumes (⚠️ deletes database data)
+docker-compose down -v
+
+# View running containers
+docker-compose ps
+
+# Access app container shell
+docker-compose exec app sh
+
+# Access database
+docker-compose exec db psql -U postgres -d apnisec
+```
+
+### Environment Variables (Docker)
+
+The `docker-compose.yml` includes default environment variables. For production, update these:
+
+```yaml
+environment:
+  DATABASE_URL: postgresql://postgres:postgres@db:5432/apnisec?schema=public
+  JWT_SECRET: your-super-secret-jwt-key-change-in-production
+  JWT_EXPIRES_IN: 7d
+  NODE_ENV: production
+```
+
+---
+
 ##API Endpoints
 
 ### Authentication

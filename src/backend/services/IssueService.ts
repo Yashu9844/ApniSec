@@ -1,15 +1,39 @@
 import { IssueRepository, CreateIssueData, UpdateIssueData } from '../repositories/IssueRepository';
+import { UserRepository } from '../repositories/UserRepository';
+import { EmailUtil } from '../utils/EmailUtil';
 import { AppError } from '../errors/AppError';
 
 export class IssueService {
   private issueRepository: IssueRepository;
+  private userRepository?: UserRepository;
 
-  constructor(issueRepository: IssueRepository) {
+  constructor(issueRepository: IssueRepository, userRepository?: UserRepository) {
     this.issueRepository = issueRepository;
+    this.userRepository = userRepository;
   }
 
   async createIssue(data: CreateIssueData) {
-    return this.issueRepository.createIssue(data);
+    const issue = await this.issueRepository.createIssue(data);
+
+    // Send email notification
+    if (this.userRepository) {
+      try {
+        const user = await this.userRepository.findUserById(data.userId);
+        if (user) {
+          await EmailUtil.sendIssueCreatedEmail(user.email, user.name, {
+            type: data.type,
+            title: data.title,
+            description: data.description,
+            priority: data.priority
+          });
+        }
+      } catch (error) {
+        console.error('Failed to send issue creation email:', error);
+        // Don't block issue creation if email fails
+      }
+    }
+
+    return issue;
   }
 
   async getIssueById(id: string, userId: string) {

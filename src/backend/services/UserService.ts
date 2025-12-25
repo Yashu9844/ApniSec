@@ -1,5 +1,6 @@
 import { UserRepository } from '../repositories/UserRepository';
 import { AppError } from '../errors/AppError';
+import { EmailUtil } from '../utils/EmailUtil';
 import bcrypt from 'bcrypt';
 
 export interface UpdateProfileData {
@@ -58,6 +59,14 @@ export class UserService {
     }
 
     const updatedUser = await this.userRepository.updateUser(userId, updateData);
+
+    // Send profile updated email notification
+    try {
+      await EmailUtil.sendProfileUpdatedEmail(updatedUser.email, updatedUser.name);
+    } catch (error) {
+      console.error('Failed to send profile update email:', error);
+      // Don't block profile update if email fails
+    }
 
     return {
       id: updatedUser.id,

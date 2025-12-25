@@ -4,6 +4,7 @@ import { IssueHandler } from '@/backend/handlers/IssueHandler';
 import { IssueService } from '@/backend/services/IssueService';
 import { IssueRepository } from '@/backend/repositories/IssueRepository';
 import { IssueValidator } from '@/backend/validators/IssueValidator';
+import { UserRepository } from '@/backend/repositories/UserRepository';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +18,10 @@ function getPrismaClient() {
 }
 
 function getIssueHandler() {
-  const issueRepository = new IssueRepository(getPrismaClient());
-  const issueService = new IssueService(issueRepository);
+  const db = getPrismaClient();
+  const issueRepository = new IssueRepository(db);
+  const userRepository = new UserRepository(db);
+  const issueService = new IssueService(issueRepository, userRepository);
   const issueValidator = new IssueValidator();
   return new IssueHandler(issueService, issueValidator);
 }

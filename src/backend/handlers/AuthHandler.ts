@@ -20,9 +20,10 @@ export class AuthHandler {
   }
 
   async handleRegister(req: NextRequest): Promise<NextResponse> {
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    
     try {
       // Check rate limit
-      const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
       await this.rateLimiter.checkLimit(clientIp);
 
       // Parse request body
@@ -38,19 +39,24 @@ export class AuthHandler {
         body.password
       );
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         data: result
       }, { status: 201 });
+
+      // Add rate limit headers
+      this.addRateLimitHeaders(response, clientIp);
+      return response;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError(error, clientIp);
     }
   }
 
   async handleLogin(req: NextRequest): Promise<NextResponse> {
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    
     try {
       // Check rate limit
-      const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
       await this.rateLimiter.checkLimit(clientIp);
 
       // Parse request body
@@ -62,12 +68,16 @@ export class AuthHandler {
       // Login user
       const result = await this.authService.login(body.email, body.password);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         data: result
       });
+
+      // Add rate limit headers
+      this.addRateLimitHeaders(response, clientIp);
+      return response;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError(error, clientIp);
     }
   }
 
@@ -117,27 +127,49 @@ export class AuthHandler {
     }
   }
 
-  private handleError(error: unknown): NextResponse {
+  private handleError(error: unknown, clientIp?: string): NextResponse {
     console.error('Auth error:', error);
 
+    let response: NextResponse;
+
     if (error instanceof AppError) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { success: false, error: error.message },
         { status: error.statusCode }
       );
-    }
-
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
+    } else if (error instanceof Error) {
+      // Check if it's a rate limit error
+      if (error.message.includes('Rate limit exceeded')) {
+        response = NextResponse.json(
+          { success: false, error: 'Too many requests. Please try again later.' },
+          { status: 429 }
+        );
+      } else {
+        response = NextResponse.json(
+          { success: false, error: error.message },
+          { status: 400 }
+        );
+      }
+    } else {
+      response = NextResponse.json(
+        { success: false, error: 'Internal server error' },
+        { status: 500 }
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    // Add rate limit headers if we have clientIp
+    if (clientIp) {
+      this.addRateLimitHeaders(response, clientIp);
+    }
+
+    return response;
+  }
+
+  private addRateLimitHeaders(response: NextResponse, clientIp: string): void {
+    const headers = this.rateLimiter.getRateLimitHeaders(clientIp);
+    response.headers.set('X-RateLimit-Limit', headers['X-RateLimit-Limit']);
+    response.headers.set('X-RateLimit-Remaining', headers['X-RateLimit-Remaining']);
+    response.headers.set('X-RateLimit-Reset', headers['X-RateLimit-Reset']);
   }
 
   private extractToken(req: NextRequest): string | null {

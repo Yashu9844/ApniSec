@@ -1,6 +1,7 @@
 import { UserRepository } from '../repositories/UserRepository';
 import { AppError } from '../errors/AppError';
 import { EmailUtil } from '../utils/EmailUtil';
+import { logger } from '../utils/Logger';
 import bcrypt from 'bcrypt';
 
 export interface UpdateProfileData {
@@ -34,9 +35,12 @@ export class UserService {
   }
 
   async updateUserProfile(userId: string, data: UpdateProfileData) {
+    logger.debug('Updating user profile', { context: 'UserService', userId, metadata: { fieldsUpdated: Object.keys(data) } });
+
     const user = await this.userRepository.findUserById(userId);
     
     if (!user) {
+      logger.warn('Profile update failed - user not found', { context: 'UserService', userId });
       throw new AppError('User not found', 404);
     }
 
@@ -60,11 +64,24 @@ export class UserService {
 
     const updatedUser = await this.userRepository.updateUser(userId, updateData);
 
+    logger.info('User profile updated successfully', { 
+      context: 'UserService', 
+      userId, 
+      metadata: { 
+        fieldsUpdated: Object.keys(updateData).filter(k => k !== 'password'),
+        passwordChanged: !!data.password 
+      } 
+    });
+
     // Send profile updated email notification
     try {
       await EmailUtil.sendProfileUpdatedEmail(updatedUser.email, updatedUser.name);
     } catch (error) {
-      console.error('Failed to send profile update email:', error);
+      logger.warn('Failed to send profile update email', { 
+        context: 'UserService', 
+        userId,
+        metadata: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
       // Don't block profile update if email fails
     }
 

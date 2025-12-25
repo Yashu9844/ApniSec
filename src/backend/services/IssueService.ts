@@ -2,6 +2,7 @@ import { IssueRepository, CreateIssueData, UpdateIssueData } from '../repositori
 import { UserRepository } from '../repositories/UserRepository';
 import { EmailUtil } from '../utils/EmailUtil';
 import { AppError } from '../errors/AppError';
+import { logger } from '../utils/Logger';
 
 export class IssueService {
   private issueRepository: IssueRepository;
@@ -13,7 +14,11 @@ export class IssueService {
   }
 
   async createIssue(data: CreateIssueData) {
+    logger.debug('Creating issue', { context: 'IssueService', userId: data.userId, metadata: { type: data.type, priority: data.priority } });
+
     const issue = await this.issueRepository.createIssue(data);
+
+    logger.info('Issue created successfully', { context: 'IssueService', userId: data.userId, metadata: { issueId: issue.id, type: data.type } });
 
     // Send email notification
     if (this.userRepository) {
@@ -28,7 +33,11 @@ export class IssueService {
           });
         }
       } catch (error) {
-        console.error('Failed to send issue creation email:', error);
+        logger.warn('Failed to send issue creation email', { 
+          context: 'IssueService', 
+          userId: data.userId,
+          metadata: { issueId: issue.id, error: error instanceof Error ? error.message : 'Unknown error' }
+        });
         // Don't block issue creation if email fails
       }
     }

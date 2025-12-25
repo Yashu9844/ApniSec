@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '../services/UserService';
 import { JwtUtil } from '../utils/JwtUtil';
 import { AppError } from '../errors/AppError';
+import { logger } from '../utils/Logger';
 
 export class UserHandler {
   private userService: UserService;
@@ -25,6 +26,9 @@ export class UserHandler {
   }
 
   async handleUpdateProfile(req: NextRequest): Promise<NextResponse> {
+    const startTime = Date.now();
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+
     try {
       const userId = await this.getUserIdFromRequest(req);
       const body = await req.json();
@@ -33,6 +37,22 @@ export class UserHandler {
       this.validateUpdateProfile(body);
 
       const updatedProfile = await this.userService.updateUserProfile(userId, body);
+
+      // Log profile update
+      logger.audit('PROFILE_UPDATED', {
+        userId,
+        ip: clientIp,
+        success: true,
+        metadata: { 
+          fieldsUpdated: Object.keys(body).filter(k => k !== 'password'),
+          passwordChanged: !!body.password 
+        }
+      });
+
+      logger.logRequest('PUT', '/api/users/profile', 200, Date.now() - startTime, {
+        userId,
+        ip: clientIp
+      });
 
       return NextResponse.json({
         success: true,
@@ -83,7 +103,29 @@ export class UserHandler {
   }
 
   private handleError(error: unknown): NextResponse {
-    console.error('User handler error:', error);
+    let statusCode = 500;
+    let errorMessage = 'Internal server error';
+
+    if (error instanceof AppError) {
+      statusCode = error.statusCode;
+      errorMessage = error.message;
+    } else if (error instanceof Error) {
+      statusCode = 400;
+      errorMessage = error.message;
+    }
+
+    // Log the error
+    if (error instanceof Error) {
+      logger.logError(error, `User handler error: ${errorMessage}`, {
+        context: 'UserHandler',
+        metadata: { statusCode }
+      });
+    } else {
+      logger.error(`User handler error: ${errorMessage}`, {
+        context: 'UserHandler',
+        metadata: { statusCode }
+      });
+    }
 
     if (error instanceof AppError) {
       return NextResponse.json(

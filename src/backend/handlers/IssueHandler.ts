@@ -3,6 +3,7 @@ import { IssueService } from '../services/IssueService';
 import { IssueValidator } from '../validators/IssueValidator';
 import { JwtUtil } from '../utils/JwtUtil';
 import { AppError } from '../errors/AppError';
+import { logger } from '../utils/Logger';
 
 export class IssueHandler {
   private issueService: IssueService;
@@ -14,6 +15,9 @@ export class IssueHandler {
   }
 
   async handleCreateIssue(req: NextRequest): Promise<NextResponse> {
+    const startTime = Date.now();
+    const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+
     try {
       // Extract user from token
       const userId = await this.getUserIdFromRequest(req);
@@ -32,6 +36,19 @@ export class IssueHandler {
         description: body.description,
         priority: body.priority || 'medium',
         status: body.status || 'open'
+      });
+
+      // Log issue creation
+      logger.audit('ISSUE_CREATED', {
+        userId,
+        ip: clientIp,
+        success: true,
+        metadata: { issueId: issue.id, type: body.type, priority: body.priority }
+      });
+
+      logger.logRequest('POST', '/api/issues', 201, Date.now() - startTime, {
+        userId,
+        ip: clientIp
       });
 
       return NextResponse.json(
@@ -174,7 +191,29 @@ export class IssueHandler {
   }
 
   private handleError(error: unknown): NextResponse {
-    console.error('Issue error:', error);
+    let statusCode = 500;
+    let errorMessage = 'Internal server error';
+
+    if (error instanceof AppError) {
+      statusCode = error.statusCode;
+      errorMessage = error.message;
+    } else if (error instanceof Error) {
+      statusCode = 400;
+      errorMessage = error.message;
+    }
+
+    // Log the error
+    if (error instanceof Error) {
+      logger.logError(error, `Issue error: ${errorMessage}`, {
+        context: 'IssueHandler',
+        metadata: { statusCode }
+      });
+    } else {
+      logger.error(`Issue error: ${errorMessage}`, {
+        context: 'IssueHandler',
+        metadata: { statusCode }
+      });
+    }
 
     if (error instanceof AppError) {
       return NextResponse.json(

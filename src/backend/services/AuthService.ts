@@ -3,6 +3,7 @@ import { UserRepository } from '../repositories/UserRepository';
 import { JwtUtil } from '../utils/JwtUtil';
 import { EmailUtil } from '../utils/EmailUtil';
 import { AppError } from '../errors/AppError';
+import { logger } from '../utils/Logger';
 
 export class AuthService {
   private userRepository: UserRepository;
@@ -23,9 +24,12 @@ export class AuthService {
   }
 
   async register(name: string, email: string, password: string): Promise<{ token: string; user: any }> {
+    logger.debug('Registration attempt', { context: 'AuthService', metadata: { email } });
+
     // Check if user already exists
     const existingUser = await this.userRepository.findUserByEmail(email);
     if (existingUser) {
+      logger.warn('Registration failed - email already exists', { context: 'AuthService', metadata: { email } });
       throw new AppError('Email already registered', 400);
     }
 
@@ -38,6 +42,8 @@ export class AuthService {
       email,
       password: hashedPassword
     });
+
+    logger.info('User registered successfully', { context: 'AuthService', userId: user.id, metadata: { email } });
 
     // Send welcome email
     await this.emailUtil.sendWelcomeEmail(email, name);
@@ -56,17 +62,23 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<{ token: string; user: any }> {
+    logger.debug('Login attempt', { context: 'AuthService', metadata: { email } });
+
     // Find user by email
     const user = await this.userRepository.findUserByEmail(email);
     if (!user) {
+      logger.warn('Login failed - user not found', { context: 'AuthService', metadata: { email } });
       throw new AppError('Invalid credentials', 401);
     }
 
     // Compare password
     const isValidPassword = await this.comparePassword(password, user.password);
     if (!isValidPassword) {
+      logger.warn('Login failed - invalid password', { context: 'AuthService', userId: user.id, metadata: { email } });
       throw new AppError('Invalid credentials', 401);
     }
+
+    logger.info('User logged in successfully', { context: 'AuthService', userId: user.id, metadata: { email } });
 
     // Generate JWT token
     const token = JwtUtil.sign({ id: user.id, email: user.email });

@@ -48,6 +48,22 @@ The application is optimized for SEO with **80%+ score**:
 - Password reset emails
 - Profile update notifications
 
+### Logging System
+- **Production-ready structured logging** (JSON format in production)
+- **Log Levels:** debug, info, warn, error
+- **Request Logging:** HTTP method, path, status code, duration
+- **Audit Logging:** User actions (login, register, issue created, profile updated)
+- **Security Logging:** Rate limit violations, suspicious activities
+- **Error Logging:** Full stack traces with context
+- **In-Memory Buffer:** Last 1000 logs for debugging
+- **API Endpoint:** `/api/logs` to retrieve recent logs
+- **Environment Configuration:**
+  ```env
+  LOG_LEVEL="info"          # debug, info, warn, error
+  SERVICE_NAME="apnisec"
+  NODE_ENV="production"     # Enables JSON structured logs
+  ```
+
 ## Tech Stack
 
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
@@ -79,10 +95,10 @@ apnisec/
        handlers/          # Request handlers (OOP)
        repositories/      # Data access layer (OOP)
        services/          # Business logic (OOP)
-       utils/             # Utilities (JWT, Email, RateLimiter)
+       utils/             # Utilities (JWT, Email, RateLimiter, Logger)
        validators/        # Input validation (OOP)
     components/            # React components
- tests/                     # Test files
+ tests/                     # Test files (auth, issues, logger, etc.)
  package.json
 ```
 

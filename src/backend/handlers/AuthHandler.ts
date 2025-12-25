@@ -3,6 +3,7 @@ import { AuthService } from '../services/AuthService';
 import { AuthValidator } from '../validators/AuthValidator';
 import { RateLimiter } from '../utils/RateLimiter';
 import { AppError } from '../errors/AppError';
+import { logger } from '../utils/Logger';
 
 export class AuthHandler {
   private authService: AuthService;
@@ -21,6 +22,7 @@ export class AuthHandler {
 
   async handleRegister(req: NextRequest): Promise<NextResponse> {
     const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    const startTime = Date.now();
     
     try {
       // Check rate limit
@@ -39,6 +41,19 @@ export class AuthHandler {
         body.password
       );
 
+      // Log successful registration
+      logger.audit('USER_REGISTERED', {
+        userId: result.user.id,
+        ip: clientIp,
+        success: true,
+        metadata: { email: body.email }
+      });
+
+      logger.logRequest('POST', '/api/auth/register', 201, Date.now() - startTime, {
+        userId: result.user.id,
+        ip: clientIp
+      });
+
       const response = NextResponse.json({
         success: true,
         data: result
@@ -54,6 +69,7 @@ export class AuthHandler {
 
   async handleLogin(req: NextRequest): Promise<NextResponse> {
     const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
+    const startTime = Date.now();
     
     try {
       // Check rate limit
@@ -67,6 +83,19 @@ export class AuthHandler {
 
       // Login user
       const result = await this.authService.login(body.email, body.password);
+
+      // Log successful login
+      logger.audit('USER_LOGIN', {
+        userId: result.user.id,
+        ip: clientIp,
+        success: true,
+        metadata: { email: body.email }
+      });
+
+      logger.logRequest('POST', '/api/auth/login', 200, Date.now() - startTime, {
+        userId: result.user.id,
+        ip: clientIp
+      });
 
       const response = NextResponse.json({
         success: true,
@@ -128,11 +157,13 @@ export class AuthHandler {
   }
 
   private handleError(error: unknown, clientIp?: string): NextResponse {
-    console.error('Auth error:', error);
-
     let response: NextResponse;
+    let statusCode = 500;
+    let errorMessage = 'Internal server error';
 
     if (error instanceof AppError) {
+      statusCode = error.statusCode;
+      errorMessage = error.message;
       response = NextResponse.json(
         { success: false, error: error.message },
         { status: error.statusCode }
@@ -140,11 +171,20 @@ export class AuthHandler {
     } else if (error instanceof Error) {
       // Check if it's a rate limit error
       if (error.message.includes('Rate limit exceeded')) {
+        statusCode = 429;
+        errorMessage = 'Rate limit exceeded';
         response = NextResponse.json(
           { success: false, error: 'Too many requests. Please try again later.' },
           { status: 429 }
         );
+        // Log rate limit security event
+        logger.security('RATE_LIMIT_EXCEEDED', {
+          ip: clientIp,
+          severity: 'medium'
+        });
       } else {
+        statusCode = 400;
+        errorMessage = error.message;
         response = NextResponse.json(
           { success: false, error: error.message },
           { status: 400 }
@@ -155,6 +195,21 @@ export class AuthHandler {
         { success: false, error: 'Internal server error' },
         { status: 500 }
       );
+    }
+
+    // Log the error
+    if (error instanceof Error) {
+      logger.logError(error, `Auth error: ${errorMessage}`, {
+        context: 'AuthHandler',
+        ip: clientIp,
+        metadata: { statusCode }
+      });
+    } else {
+      logger.error(`Auth error: ${errorMessage}`, {
+        context: 'AuthHandler',
+        ip: clientIp,
+        metadata: { statusCode }
+      });
     }
 
     // Add rate limit headers if we have clientIp

@@ -2,13 +2,7 @@
 const BASE_URL = 'http://localhost:3000';
 
 async function testEmailFlow() {
-  console.log('═══════════════════════════════════════════════════════════════');
-  console.log('             🧪 Resend Email Integration Test');
-  console.log('═══════════════════════════════════════════════════════════════\n');
 
-  // Test 1: Test forgot password with existing email
-  console.log('📧 Test 1: Forgot Password Request');
-  console.log('─────────────────────────────────────');
   
   try {
     const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {

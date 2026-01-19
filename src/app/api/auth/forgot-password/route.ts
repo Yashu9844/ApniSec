@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     const { email } = validationResult.data;
 
-    // Find user by email
     const user = await db.user.findUnique({
       where: { email },
     });
